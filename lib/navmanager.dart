@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:safespace/navbar.dart';
 import 'package:safespace/homescreen.dart';
 import 'package:safespace/screens/profile.dart';
-import 'package:safespace/screens/counsellor.dart';
+import 'package:safespace/screens/doctor_screen.dart';
 import 'package:safespace/screens/entertainment.dart';
+
 
 
 
@@ -21,7 +22,7 @@ class _NavManagerState extends State<NavManager> {
   late final List<Widget> _screens = [
     const HomeScreen(),
     const EntertainmentScreen(),
-    if (!widget.isGuest) const CounsellorScreen() else const SizedBox.shrink(),
+    if (!widget.isGuest)  DoctorScreen() else const SizedBox.shrink(),
     if (!widget.isGuest) const ProfilePage() else const SizedBox.shrink(),
   ];
 
