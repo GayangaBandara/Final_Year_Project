@@ -34,12 +34,25 @@ def get_all_doctors():
 def get_doctors_by_dominant_state(dominant_state):
     """Fetch doctors who have the same dominant_state"""
     try:
+        # First try to find doctors specializing in this state
         response = (
             supabase.table("doctors")
             .select("*")
             .eq("dominant_state", dominant_state)
             .execute()
         )
+        
+        if response.data:
+            return response.data
+            
+        # If no specialists found, get doctors who handle general cases
+        response = (
+            supabase.table("doctors")
+            .select("*")
+            .eq("dominant_state", "General")
+            .execute()
+        )
+        
         return response.data if response.data else []
     except Exception as e:
         print(f"Error fetching doctors by dominant state: {e}")
@@ -74,15 +87,43 @@ def store_recommended_doctor(user_id, doctor_id):
 
 def assign_best_available_doctor(user_id, matching_doctors):
     """
-    Assign the first available (not already assigned) doctor
-    and store it in recommended_doctor table.
+    Assign the best available doctor based on specialization and availability.
     """
-    for doctor in matching_doctors:
-        if not is_doctor_already_assigned(doctor["id"]):
-            # Assign this doctor to the user
-            store_recommended_doctor(user_id, doctor["id"])
-            return doctor  # Return the assigned doctor
-    return None  # No available doctor found
+    try:
+        # Check if user already has an assigned doctor
+        existing = (
+            supabase.table("recommended_doctor")
+            .select("doctor_id")
+            .eq("user_id", user_id)
+            .execute()
+        )
+        
+        if existing.data:
+            doctor_id = existing.data[0]["doctor_id"]
+            doctor = next((d for d in matching_doctors if d["id"] == doctor_id), None)
+            if doctor:
+                return doctor
+        
+        # Sort doctors by specialization (specialists first, then general practitioners)
+        sorted_doctors = sorted(
+            matching_doctors,
+            key=lambda x: 0 if x.get("dominant_state") != "General" else 1
+        )
+        
+        # Try to find an available doctor
+        for doctor in sorted_doctors:
+            if not is_doctor_already_assigned(doctor["id"]):
+                result = store_recommended_doctor(user_id, doctor["id"])
+                if result:
+                    print(f"\n✅ Assigned Dr. {doctor['name']} to user {user_id}")
+                    return doctor
+        
+        print(f"\n❌ No available doctors found for user {user_id}")
+        return None
+        
+    except Exception as e:
+        print(f"Error assigning doctor: {e}")
+        return None
 
 def display_doctors(doctors, title="ALL DOCTORS"):
     """Display doctors in a formatted way using the actual table columns"""

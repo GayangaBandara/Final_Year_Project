@@ -17,7 +17,7 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
   String? userId;
   String? currentConversationId;
   StreamSubscription<List<Map<String, dynamic>>>? _messageSubscription;
-  String selectedModel = "Llama3-70B";
+  String selectedModel = "llama2-70b-4096";
 
   @override
   void initState() {
@@ -54,11 +54,11 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
           .insert({'user_id': userId})
           .select()
           .single();
-      
+
       setState(() {
         currentConversationId = response['id'] as String;
       });
-      
+
       _setupRealtime();
     } catch (e) {
       print('Error starting new conversation: $e');
@@ -66,7 +66,8 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
       setState(() => isLoading = false);
     }
   }
-//mainnnnnass
+
+  //mainnnnnass
   Future<void> _endCurrentConversation() async {
     if (currentConversationId != null) {
       try {
@@ -82,7 +83,7 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
 
   Future<void> _storeMessage(String message, bool isBot) async {
     if (userId == null || currentConversationId == null) return;
-    
+
     try {
       await supabase.from('messages').insert({
         'conversation_id': currentConversationId,
@@ -115,9 +116,9 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
         .order('created_at')
         .listen((List<Map<String, dynamic>> data) {
           // Filter messages to only include current conversation
-          final conversationMessages = data.where(
-            (msg) => msg['conversation_id'] == currentConversationId
-          ).toList();
+          final conversationMessages = data
+              .where((msg) => msg['conversation_id'] == currentConversationId)
+              .toList();
 
           if (conversationMessages.isNotEmpty) {
             final newMsg = conversationMessages.last;
@@ -137,13 +138,16 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
 
   String _formatTimestamp(dynamic timestamp) {
     if (timestamp == null) return '';
-    DateTime time = timestamp is DateTime ? timestamp : DateTime.parse(timestamp);
+    DateTime time = timestamp is DateTime
+        ? timestamp
+        : DateTime.parse(timestamp);
     return '${time.hour}:${time.minute.toString().padLeft(2, '0')}';
   }
 
   void handleSend() async {
     String userInput = _controller.text.trim();
-    if (userInput.isEmpty || userId == null || currentConversationId == null) return;
+    if (userInput.isEmpty || userId == null || currentConversationId == null)
+      return;
 
     setState(() {
       messages.add({"sender": "user", "text": userInput});
@@ -160,7 +164,7 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
       String botReply = await ChatService.sendMessage(userInput, selectedModel);
       messages.removeLast();
       await _storeMessage(botReply, true);
-      
+
       setState(() {
         messages.add({"sender": "bot", "text": botReply});
       });
@@ -168,8 +172,8 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
       messages.removeLast();
       setState(() {
         messages.add({
-          "sender": "bot", 
-          "text": "Sorry, I encountered an error. Please try again."
+          "sender": "bot",
+          "text": "Sorry, I encountered an error. Please try again.",
         });
       });
     } finally {
@@ -204,15 +208,22 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
                 final msg = messages[index];
                 final isUser = msg['sender'] == 'user';
                 return Column(
-                  crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                  crossAxisAlignment: isUser
+                      ? CrossAxisAlignment.end
+                      : CrossAxisAlignment.start,
                   children: [
-                    if (index == 0 || 
-                        messages[index-1]['sender'] != msg['sender'] || 
-                        (msg['timestamp'] != null && 
-                         messages[index-1]['timestamp'] != null &&
-                         (DateTime.parse(msg['timestamp']).difference(
-                           DateTime.parse(messages[index-1]['timestamp'])
-                         ).inMinutes > 5)))
+                    if (index == 0 ||
+                        messages[index - 1]['sender'] != msg['sender'] ||
+                        (msg['timestamp'] != null &&
+                            messages[index - 1]['timestamp'] != null &&
+                            (DateTime.parse(msg['timestamp'])
+                                    .difference(
+                                      DateTime.parse(
+                                        messages[index - 1]['timestamp'],
+                                      ),
+                                    )
+                                    .inMinutes >
+                                5)))
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Text(
@@ -221,12 +232,15 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
                         ),
                       ),
                     Align(
-                      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                      alignment: isUser
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
                       child: Container(
                         margin: EdgeInsets.symmetric(vertical: 6),
                         padding: EdgeInsets.all(14),
                         constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width * 0.75),
+                          maxWidth: MediaQuery.of(context).size.width * 0.75,
+                        ),
                         decoration: BoxDecoration(
                           color: isUser ? Color(0xFF80CBC4) : Colors.white,
                           borderRadius: BorderRadius.only(

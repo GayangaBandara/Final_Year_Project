@@ -1,38 +1,88 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from pydantic import BaseModel
-import json
 import os
+import json
 import random
 import re
 from groq import Groq
 from fastapi.middleware.cors import CORSMiddleware
-<<<<<<< HEAD:lib/Mental_Health_Chatbot/MentalHealthChatbot.py
 from dotenv import load_dotenv
 
-# Load variables from .env file
+# -------------------------------------------------------------------
+# Load environment variables
+# -------------------------------------------------------------------
 load_dotenv()
 
-# Access your key
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")  # Loaded from environment only. Do not hardcode secrets.
-=======
+# -------------------------------------------------------------------
+# Available Groq models (include compatibility alias)
+# -------------------------------------------------------------------
+MODELS = {
+    "default": "llama3-70b-8192",
+    "Llama3-70B": "llama3-70b-8192",
+    "Mixtral-8x7B": "mixtral-8x7b-32768",
+    "llama2-70b-4096": "llama3-70b-8192"  # alias for frontend compatibility
+}
 
-# Set your API keys
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "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")
->>>>>>> 1c277e6f932727e1ad17911806f0edbae4dc697e:lib/Backend/Mental_Health_Chatbot/MentalHealthChatbot.py
+# -------------------------------------------------------------------
+# Initialize router and Groq client
+# -------------------------------------------------------------------
+router = APIRouter()
 
-# Initialize Groq client
-groq_client = Groq(api_key=GROQ_API_KEY)
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    raise ValueError("GROQ_API_KEY not found in environment variables")
 
-# Load mental health dataset
+print(f"✅ Found GROQ_API_KEY: {'*' * len(GROQ_API_KEY[:4])}...{'*' * len(GROQ_API_KEY[-4:])}")
+
 try:
-    with open("MentalHealthChatbotDataset.json", "r", encoding="utf-8") as file:
-        dataset = json.load(file)
+    groq_client = Groq(api_key=GROQ_API_KEY)
+    # Test connection with default model
+    test_response = groq_client.chat.completions.create(
+        model=MODELS["default"],
+        messages=[{"role": "user", "content": "test"}],
+        max_tokens=10
+    )
+    print("✅ Successfully connected to Groq API")
+except Exception as e:
+    print(f"❌ Error connecting to Groq API: {str(e)}")
+
+# -------------------------------------------------------------------
+# Crisis-related keywords and response
+# -------------------------------------------------------------------
+CRISIS_KEYWORDS = [
+    "suicide", "kill myself", "end my life",
+    "can't go on", "self harm", "hurt myself"
+]
+
+# Crisis response (updated as per your rules)
+CRISIS_RESPONSE = (
+    "I'm really concerned about you. You don’t have to go through this alone—"
+    "sometimes sharing what you feel can lighten the weight a little. "
+    "It may help to do something simple like reaching out to a trusted friend or stepping outside for fresh air.\n\n"
+    "If you’re thinking about suicide or self-harm, please call **Sumithrayo Hotline (011 2 682 682)** "
+    "or **Sri Lanka College of Psychiatrists Helpline (071 722 5222)** for immediate support.\n\n"
+    "You are stronger than you think, and better days can still come."
+)
+
+# -------------------------------------------------------------------
+# Load mental health dataset
+# -------------------------------------------------------------------
+try:
+    dataset_path = os.path.join(os.path.dirname(__file__), "MentalHealthChatbotDataset.json")
+    with open(dataset_path, "r", encoding="utf-8") as file:
+        raw_dataset = json.load(file)
+        dataset = {}
+        for intent in raw_dataset.get("intents", []):
+            if "tag" in intent and "responses" in intent:
+                dataset[intent["tag"]] = intent["responses"][0]
     print("✅ Dataset loaded successfully")
 except Exception as e:
     print(f"❌ Error loading dataset: {e}")
     dataset = {}
 
-# Rotating simple responses
+# -------------------------------------------------------------------
+# Simple rotating responses
+# -------------------------------------------------------------------
 SIMPLE_RESPONSES = {
     "hi": [
         "**HELLO!** How can I support you today?",
@@ -66,44 +116,17 @@ SIMPLE_RESPONSES = {
     ]
 }
 
-# Available Groq models
-MODELS = {
-    "Llama3-70B": "llama3-70b-8192",
-    "Mixtral-8x7B": "mixtral-8x7b-32768"
-}
-
-# Crisis-related keywords
-CRISIS_KEYWORDS = [
-    "suicide", "kill myself", "end my life",
-    "can't go on", "self harm", "hurt myself"
-]
-
+# -------------------------------------------------------------------
+# Helpers
+# -------------------------------------------------------------------
 def contains_crisis(message: str) -> bool:
     return any(kw in message.lower() for kw in CRISIS_KEYWORDS)
 
-app = FastAPI()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-class ChatRequest(BaseModel):
-    message: str
-    model: str = "Llama3-70B"  # Default to Llama 3 70B
-
-class ChatResponse(BaseModel):
-    response: str
-
 def clean_response(text: str, crisis_mode: bool = False) -> str:
     """Clean the AI response and enforce hotline rules"""
-    # Remove any system prompt remnants
     text = text.split("AI:")[-1].strip()
 
-    # Ensure first sentence is uppercase encouraging
+    # Uppercase first line
     if "\n" in text:
         first_line, rest = text.split("\n", 1)
         first_line = first_line.upper()
@@ -115,14 +138,13 @@ def clean_response(text: str, crisis_mode: bool = False) -> str:
             rest = ". ".join(sentences[1:]).strip()
             text = f"{first_sentence}. {rest}"
 
-    # Remove quotation marks
     text = text.replace('"', '').replace("'", "")
 
-    # Remove hotline numbers if NOT crisis mode
+    # Remove hotline numbers if not crisis mode
     if not crisis_mode:
         text = re.sub(r"(Sumithrayo.*?\d+|Psychiatrists.*?\d+|Helpline.*?\d+)", "", text, flags=re.IGNORECASE)
 
-    # Ensure ends with positive note
+    # Ensure positive ending
     positive_phrases = ["remember", "you can", "try", "hope", "suggestion"]
     if not any(phrase in text.lower() for phrase in positive_phrases):
         text += " Remember, small steps can make a big difference."
@@ -130,7 +152,6 @@ def clean_response(text: str, crisis_mode: bool = False) -> str:
     return text.strip()
 
 def query_groq(model: str, prompt: str, max_tokens: int = 512) -> str:
-    """Query Groq's API"""
     response = groq_client.chat.completions.create(
         model=model,
         messages=[
@@ -142,58 +163,101 @@ def query_groq(model: str, prompt: str, max_tokens: int = 512) -> str:
     )
     return response.choices[0].message.content
 
-@app.post("/chat", response_model=ChatResponse)
-def chat_with_bot(request: ChatRequest):
-    user_message = request.message.lower().strip()
+# -------------------------------------------------------------------
+# Pydantic Models
+# -------------------------------------------------------------------
+class ChatRequest(BaseModel):
+    message: str
+    model: str = "default"
 
-    # Simple responses
-    if user_message in SIMPLE_RESPONSES:
-        return ChatResponse(response=random.choice(SIMPLE_RESPONSES[user_message]))
+class ChatResponse(BaseModel):
+    response: str
 
-    # Crisis detection
-    crisis_mode = contains_crisis(user_message)
-    if crisis_mode:
-        crisis_response = (
-            "**I'M REALLY CONCERNED ABOUT YOU.** You are not alone in this, and help is available.\n"
-            "👉 You can call **Sumithrayo Hotline (011 2 682 682)** or "
-            "**Sri Lanka College of Psychiatrists Helpline (071 722 5222)** right now for immediate support.\n"
-            "Please reach out—you deserve help and care."
-        )
-        return ChatResponse(response=crisis_response)
-
-    # Add context from dataset
-    context = ""
-    for keyword, advice in dataset.items():
-        if keyword.lower() in user_message:
-            context = f"\nRelevant information: {advice}"
-            break
-
-    # Prompt engineering
-    prompt = f"""Respond to this message:
-    "{request.message}"{context}
-
-    Response requirements:
-    - Start with one encouraging sentence
-    - Use a warm, friendly tone
-    - Avoid medical jargon or robotic wording
-    - Give practical, everyday suggestions
-    - Share hotline numbers ONLY if user expresses suicidal thoughts or self-harm
-    - Do not use Sinhala
-    - End with a hopeful or empowering note
-    """
-
+# -------------------------------------------------------------------
+# Chat Endpoint
+# -------------------------------------------------------------------
+@router.post("/chat", response_model=ChatResponse)
+async def chat_with_bot(request: ChatRequest):
     try:
-        if request.model not in MODELS:
-            return ChatResponse(response=f"Error: Model {request.model} not found")
+        user_message = request.message.lower().strip()
 
-        response = query_groq(MODELS[request.model], prompt)
-        cleaned_response = clean_response(response, crisis_mode=crisis_mode)
-        return ChatResponse(response=cleaned_response)
+        # Simple responses
+        if user_message in SIMPLE_RESPONSES:
+            return ChatResponse(response=random.choice(SIMPLE_RESPONSES[user_message]))
+
+        # Crisis check FIRST (before model validation)
+        crisis_mode = contains_crisis(user_message)
+        if crisis_mode:
+            return ChatResponse(response=CRISIS_RESPONSE)
+
+        # Add context from dataset
+        context = ""
+        for keyword, advice in dataset.items():
+            if keyword.lower() in user_message:
+                context = f"\nRelevant information: {advice}"
+                break
+
+        # Prompt
+        prompt = f"""As a mental health support assistant, respond with empathy and care:
+
+        User's message: "{request.message}"
+        {context}
+
+        Response requirements:
+            - Start with one encouraging sentence
+            - Use a warm, friendly tone
+            - Avoid medical jargon or robotic wording
+            - Give practical, everyday suggestions
+            - Share hotline numbers ONLY if user expresses suicidal thoughts or self-harm
+            - Do not use Sinhala
+            - End with a hopeful or empowering note
+            - Maintain hope and encouragement
+        """
+
+        # Model validation
+        if request.model not in MODELS:
+            available = ", ".join(MODELS.keys())
+            return ChatResponse(
+                response=f"I apologize, but the model '{request.model}' is not available. Available models are: {available}"
+            )
+
+        try:
+            completion = groq_client.chat.completions.create(
+                model=MODELS[request.model],
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are SafeSpace Assistant, a supportive mental health chatbot focused on providing emotional support and encouragement."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                temperature=0.7,
+                max_tokens=300,
+                top_p=1,
+                stream=False
+            )
+
+            response_text = completion.choices[0].message.content
+            return ChatResponse(response=clean_response(response_text, crisis_mode=crisis_mode))
+
+        except Exception as e:
+            print(f"Groq API Error - {type(e).__name__}: {str(e)}")
+            if "not found" in str(e).lower():
+                return ChatResponse(response="I'm having trouble with the selected model. Please try another.")
+            elif "timeout" in str(e).lower():
+                return ChatResponse(response="The request timed out. Please try again in a moment.")
+            elif "rate limit" in str(e).lower():
+                return ChatResponse(response="Too many requests right now. Please wait and try again.")
+            else:
+                return ChatResponse(response="I'm having trouble connecting to my language model right now. Please try again later.")
 
     except Exception as e:
-        print(f"Error generating response: {e}")
-        return ChatResponse(response="**I'M HERE FOR YOU.** Let's try that again. Could you rephrase your message?")
+        print(f"Error in chat endpoint: {str(e)}")
+        return ChatResponse(response="I'm sorry, something went wrong. Please try again in a moment.")
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+# -------------------------------------------------------------------
+# End of file
+# -------------------------------------------------------------------
