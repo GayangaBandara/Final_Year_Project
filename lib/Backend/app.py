@@ -120,7 +120,10 @@ def assign_best_available_doctor(user_id: str, matching_doctors: list) -> Option
 async def recommend_doctor(req: UserRequest):
     """Recommend a doctor for a user based on their mental state"""
     try:
-        logger.info(f"Received recommendation request for user: {req.user_id}")
+        logger.info("====== New Doctor Recommendation Request ======")
+        logger.info(f"User ID: {req.user_id}")
+        logger.info(f"Supabase URL: {SUPABASE_URL}")
+        logger.info("Attempting to connect to Supabase...")
         
         # Check if user already has an assigned doctor
         try:
@@ -188,8 +191,14 @@ async def recommend_doctor(req: UserRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error in doctor recommendation: {str(e)}")
+        error_msg = str(e)
+        logger.error(f"Error in doctor recommendation: {error_msg}")
+        logger.error(f"Type of error: {type(e)}")
+        import traceback
+        logger.error(f"Stack trace: {traceback.format_exc()}")
+        
+        # Return a more detailed error message
         raise HTTPException(
             status_code=500,
-            detail="Internal server error occurred while processing your request"
+            detail=f"Server error: {error_msg}"
         )
