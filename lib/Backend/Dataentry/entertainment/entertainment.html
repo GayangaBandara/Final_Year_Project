@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Entertainment</title>
+  <link rel="stylesheet" href="css/entertainment.css">
+</head>
+<body>
+  <div class="form-container">
+    <h2>Add Entertainment</h2>
+    <form id="entertainmentForm">
+      <label for="title">Title:</label>
+      <input type="text" id="title" name="title" required>
+
+      <label for="type">Type:</label>
+      <select id="type" name="type" required>
+        <option value="">--Select Type--</option>
+        <option value="Music Track">Music Track</option>
+        <option value="Meditation">Meditation</option>
+        <option value="Breathing Exercise">Breathing Exercise</option>
+      </select>
+
+      <label for="description">Description:</label>
+      <textarea id="description" name="description" rows="3"></textarea>
+
+      <label for="cover_img">Cover Image (PNG, JPG, max 5MB):</label>
+      <input type="file" id="cover_img" name="cover_img" accept="image/*" required>
+      <div class="file-info" id="coverInfo"></div>
+
+      <label for="media_file">Media File (MP3, MP4, max 20MB):</label>
+      <input type="file" id="media_file" name="media_file" accept="audio/*,video/*" required>
+      <div class="file-info" id="mediaInfo"></div>
+
+      <div class="progress-container" id="progressContainer">
+        <div class="progress-bar" id="progressBar">0%</div>
+      </div>
+
+      <button type="submit" id="submitBtn">Add Entertainment</button>
+      <p class="success" id="successMsg"></p>
+      <p class="error" id="errorMsg"></p>
+    </form>
+
+    <div class="policy-help">
+      <h3>Storage Policy Setup Required</h3>
+      <p>To fix the upload issue, you need to add these RLS policies in your Supabase dashboard:</p>
+      <p>1. Go to <strong>Storage</strong> → <strong>Policies</strong></p>
+      <p>2. Run these SQL commands for your <code>entertainment_media</code> bucket:</p>
+      <code>
+        CREATE POLICY "Allow public uploads"<br>
+        ON storage.objects FOR INSERT<br>
+        TO authenticated, anon<br>
+        WITH CHECK (bucket_id = 'entertainment_media');
+      </code>
+    </div>
+  </div>
+
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/entertainment.js"></script>
+</body>
+</html>

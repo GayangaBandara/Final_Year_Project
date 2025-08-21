@@ -1,0 +1,214 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+}
+
+.form-container {
+  background: #fff;
+  padding: 35px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 550px;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #2c3e50;
+  font-size: 28px;
+  position: relative;
+}
+
+h2:after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 4px;
+  background: #3498db;
+  margin: 10px auto;
+  border-radius: 2px;
+}
+
+label {
+  display: block;
+  margin-top: 18px;
+  font-weight: 600;
+  color: #34495e;
+  font-size: 15px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+textarea,
+select,
+input[type="file"] {
+  width: 100%;
+  padding: 12px 15px;
+  margin-top: 8px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  box-sizing: border-box;
+  font-size: 15px;
+  transition: all 0.3s;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+button {
+  margin-top: 30px;
+  width: 100%;
+  padding: 14px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 17px;
+  font-weight: 600;
+  transition: background 0.3s, transform 0.2s;
+  box-shadow: 0 4px 6px rgba(52, 152, 219, 0.2);
+}
+
+button:hover {
+  background: #2980b9;
+  transform: translateY(-2px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+button:disabled {
+  background: #95a5a6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.success,
+.error {
+  display: none;
+}
+
+.success {
+  color: #27ae60;
+  text-align: center;
+  margin-top: 20px;
+  font-weight: 600;
+  padding: 10px;
+  background: rgba(39, 174, 96, 0.1);
+  border-radius: 5px;
+}
+
+.error {
+  color: #e74c3c;
+  text-align: center;
+  margin-top: 20px;
+  font-weight: 600;
+  padding: 10px;
+  background: rgba(231, 76, 60, 0.1);
+  border-radius: 5px;
+}
+
+.progress-container {
+  margin-top: 20px;
+  background: #ecf0f1;
+  border-radius: 8px;
+  overflow: hidden;
+  display: none;
+  height: 22px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #3498db, #2ecc71);
+  width: 0%;
+  transition: width 0.4s;
+  text-align: center;
+  color: white;
+  font-weight: bold;
+  line-height: 22px;
+  font-size: 13px;
+}
+
+/* collapsible details look */
+.policy-help {
+  margin-top: 50px;       /* push the box lower */
+  padding: 10px 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 5px solid #3498db;
+  font-size: 14px;
+}
+
+.policy-help details summary {
+  cursor: pointer;
+  list-style: none;
+  font-weight: normal;    /* remove bold */
+  color: #2c3e50;
+}
+
+.policy-help details summary::-webkit-details-marker {
+  display: none;
+}
+
+.policy-help details summary::after {
+  content: ' ▸';
+  font-weight: 700;
+}
+
+.policy-help details[open] summary::after {
+  content: ' ▾';
+}
+
+.policy-help code {
+  background: #eee;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 13px;
+  display: block;
+  margin: 10px 0;
+  overflow-x: auto;
+}
+
+
+.file-info {
+  font-size: 13px;
+  color: #7f8c8d;
+  margin-top: 5px;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+}
+
+.form-row > div {
+  flex: 1;
+}
+
+.doctor-icon {
+  text-align: center;
+  font-size: 40px;
+  margin-bottom: 15px;
+  color: #3498db;
+}
