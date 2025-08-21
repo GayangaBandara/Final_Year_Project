@@ -6,7 +6,9 @@ import logging
 import os
 from supabase import create_client, Client
 from dotenv import load_dotenv
-from typing import Optional
+from typing import Optional, List
+from datetime import datetime
+import uuid
 
 # Load environment variables
 load_dotenv()
@@ -45,7 +47,8 @@ async def root():
         "message": "SafeSpace API is running",
         "endpoints": {
             "chatbot": "/api/chat",
-            "status": "/"
+            "status": "/",
+            "entertainment": "/recommend_entertainment"
         }
     }
 
@@ -98,6 +101,85 @@ def is_doctor_already_assigned(doctor_id: str) -> bool:
 
 def store_recommended_doctor(user_id: str, doctor_id: str) -> Optional[dict]:
     """Store a doctor recommendation for a user"""
+
+@app.post("/recommend_entertainment")
+async def recommend_entertainment(request: UserRequest) -> dict:
+    """Get entertainment recommendations for a user based on their mental state"""
+    try:
+        # Fetch user's dominant state
+        response = (
+            supabase.table('mental_state_reports')
+            .select('dominant_state, created_at')
+            .eq('user_id', request.user_id)
+            .order('created_at', desc=True)
+            .limit(1)
+            .execute()
+        )
+        
+        if not response.data:
+            raise HTTPException(
+                status_code=404,
+                detail="No mental state report found for this user"
+            )
+
+        report = response.data[0]
+        user_dominant_state = report['dominant_state']
+        
+        # Fetch entertainments with matching dominant state
+        entertainment_response = (
+            supabase.table('entertainments')
+            .select('id, title, type, dominant_state, cover_img_url, description, media_file_url')
+            .eq('dominant_state', user_dominant_state)
+            .execute()
+        )
+        
+        if not entertainment_response.data:
+            return {
+                "success": True,
+                "recommendations": [],
+                "message": f"No entertainments found matching the '{user_dominant_state}' state."
+            }
+            
+        # Store recommendations and prepare response
+        recommendations = []
+        for entertainment in entertainment_response.data:
+            try:
+                recommendation_data = {
+                    'id': str(uuid.uuid4()),
+                    'user_id': request.user_id,
+                    'entertainment_id': entertainment['id'],
+                    'recommended_at': datetime.now().isoformat(),
+                    'matched_state': user_dominant_state
+                }
+                
+                # Store the recommendation
+                supabase.table('recommended_entertainments').insert(recommendation_data).execute()
+                
+                # Add to return list with additional details
+                recommendations.append({
+                    **entertainment,
+                    'recommended_at': recommendation_data['recommended_at'],
+                    'matched_state': user_dominant_state
+                })
+                
+            except Exception as insert_error:
+                logger.error(f"Failed to store recommendation: {insert_error}")
+                continue
+        
+        return {
+            "success": True,
+            "recommendations": recommendations,
+            "dominant_state": user_dominant_state
+        }
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Error in recommend_entertainment endpoint: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
     try:
         response = supabase.table("recommended_doctor").insert({
             "user_id": user_id,
