@@ -36,7 +36,7 @@ class _DoctorScreenState extends State<DoctorScreen> {
 
       // Call your backend API
       final response = await http.post(
-        Uri.parse("http://127.0.0.1:8000/recommend"),
+        Uri.parse("http://192.168.1.6:8000/recommend"),
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer ${user.id}", // Add auth token if needed

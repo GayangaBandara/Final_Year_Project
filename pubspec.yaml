@@ -17,6 +17,8 @@ dependencies:
   http: ^1.4.0
   supabase_flutter: ^2.9.1
   image_picker: ^1.1.2
+  just_audio: ^0.9.38
+  audio_video_progress_bar: ^1.0.1
 
 dev_dependencies:
   flutter_test:

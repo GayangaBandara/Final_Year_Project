@@ -37,7 +37,7 @@ class NavBar extends StatelessWidget {
             iconSize: 24,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             duration: const Duration(milliseconds: 400),
-            tabBackgroundColor: Colors.blue[100]!,
+            tabBackgroundColor: const Color.fromARGB(255, 119, 238, 152)!,
             color: Colors.black,
             tabs: [
               const GButton(

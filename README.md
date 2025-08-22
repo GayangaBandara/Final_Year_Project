@@ -69,10 +69,10 @@ python -m uvicorn MentalHealthChatbot:app --host 0.0.0.0 --port 8000 --reload
 
 ```
 Once running, the chatbot API will be available at:
-👉 http://127.0.0.1:8000
+👉 http://192.168.1.6:8000
 
 Interactive API docs will be available at:
-👉 http://127.0.0.1:8000/docs
+👉 http://192.168.1.6:8000/docs
 
 ## 🧑‍💻 Contributors
 - **Kavindu Dedunupitiya** – Project Lead and UX UI Designer ( 22UG1-0812 )

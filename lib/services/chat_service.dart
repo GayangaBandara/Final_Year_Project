@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ChatService {
-  static const String _baseUrl = 'http://127.0.0.1:8000/api/chat';
+  static const String _baseUrl = 'http://192.168.1.6:8000/api/chat';
 
   static Future<String> sendMessage(String userMessage, String model) async {
     final url = Uri.parse(_baseUrl);
